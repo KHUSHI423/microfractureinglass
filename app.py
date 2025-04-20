@@ -16,9 +16,9 @@ def load_model(path, name):
         return None
 
 # Define model file paths
-clf_path = 'C:\\Users\\khush\\Downloads\\microfracture\\fracture_detection_model.pkl'
-scaler_path = 'C:\\Users\\khush\\Downloads\\microfracture\\scaler.pkl'
-reg_path = 'C:\\Users\\khush\\Downloads\\microfracture\\lifespan_model.pkl'
+clf_path = 'C:\Users\khush\Downloads\microfracture\fracture_detection_model.pkl'
+scaler_path = 'C:\Users\khush\Downloads\microfracture\scaler.pkl'
+reg_path = 'C:\Users\khush\Downloads\microfracture\lifespan_model.pkl
 
 
 
