@@ -2,7 +2,6 @@ import streamlit as st
 import joblib
 import numpy as np
 import os
-import serial
 import pandas as pd
 import time
 
