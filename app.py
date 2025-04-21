@@ -83,4 +83,7 @@ else:
 import os
 st.write("Current working directory:", os.getcwd())
 st.write("Classifier path exists:", os.path.exists(clf_path))
+# Trigger redeploy
+st.write("App reloaded")
+
 
