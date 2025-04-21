@@ -2,6 +2,9 @@ import streamlit as st
 import joblib
 import numpy as np
 import os
+import serial
+import pandas as pd
+import time
 
 # Safe model loader
 def load_model(path, name):
@@ -45,51 +48,78 @@ def estimate_lifespan(thickness_mm, voltage):
 clf_path = 'fracture_detection_model.pkl'
 scaler_path = 'scaler.pkl'
 reg_path = 'lifespan_model.pkl'
-
-
-
 # Load models
 clf_model = load_model(clf_path, "Classifier Model")
 scaler = load_model(scaler_path, "Scaler")
 
+# ---------- Real-Time Sensor Data Integration ----------
+# Define your serial port and baud rate (use correct COM port for your ESP32)
+SERIAL_PORT = 'COM4'  # ⚠️ Change to the correct port (Windows: COM4, Linux: /dev/ttyUSB0)
+BAUD_RATE = 115200
+
+try:
+    # Try to connect to the ESP32 device using pyserial
+    ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+    time.sleep(2)  # Wait a little for ESP32 to establish connection
+    st.success(f"Connected to {SERIAL_PORT}")
+except Exception as e:
+    st.error(f"Failed to connect to {SERIAL_PORT}: {e}")
+    st.stop()  # Stop the app if serial connection fails
+
 # Main app
-if clf_model and scaler:
+if clf_model and scaler and ser:
     st.title("🔍 Microfracture Risk & Lifespan Estimator")
 
-    voltage = st.slider("📟 Piezo Voltage (V)", 0.0, 3.3, 0.1)
-    thickness_cm = st.number_input("🔍 Glass Thickness (cm)", min_value=0.1, max_value=7.5, value=0.4)
-    thickness_mm = thickness_cm * 10  # Convert to mm
+    # Create an empty placeholder for showing live data
+    placeholder = st.empty()
+    data_list = []
 
-    input_data = np.array([[voltage, thickness_cm]])
+    # Add button to start monitoring
+    if st.button("Start Monitoring"):
+        while True:
+            line = ser.readline().decode("utf-8").strip()  # Read the data line from the ESP32
+            if line and not line.startswith("timestamp"):  # Ignore header
+                parts = line.split(",")  # Split CSV format
+                if len(parts) == 6:
+                    # Extract individual sensor data
+                    timestamp = int(parts[0])
+                    voltage = float(parts[2])
+                    thickness_cm = float(parts[3])  # Assume this is the thickness
+                    thickness_mm = thickness_cm * 10  # Convert to mm
 
-    try:
-        input_scaled = scaler.transform(input_data)
-        risk = clf_model.predict(input_scaled)[0]
-        lifespan_prediction = estimate_lifespan(thickness_mm, voltage)
+                    # Create input data array for model prediction
+                    input_data = np.array([[voltage, thickness_cm]])
 
-        st.subheader("🔮 Prediction Results")
-        st.write(f"📈 **Voltage**: `{voltage:.2f} V`")
-        st.write(f"📏 **Glass Thickness**: `{thickness_cm:.2f} cm`")
-        st.write(f"⚠️ **Microfracture Risk**: {'High' if risk == 1 else 'Low'}")
-        st.write(f"📅 **Estimated Remaining Lifespan**: `{lifespan_prediction:.2f} years`")
+                    try:
+                        input_scaled = scaler.transform(input_data)
+                        risk = clf_model.predict(input_scaled)[0]
+                        lifespan_prediction = estimate_lifespan(thickness_mm, voltage)
 
-        st.progress(min(voltage / 3.3, 1.0))
+                        # Display the prediction results
+                        st.subheader("🔮 Prediction Results")
+                        st.write(f"📈 **Voltage**: `{voltage:.2f} V`")
+                        st.write(f"📏 **Glass Thickness**: `{thickness_cm:.2f} cm`")
+                        st.write(f"⚠️ **Microfracture Risk**: {'High' if risk == 1 else 'Low'}")
+                        st.write(f"📅 **Estimated Remaining Lifespan**: `{lifespan_prediction:.2f} years`")
 
-    except Exception as e:
-        st.error(f"Error during prediction: {e}")
+                        # Display data in table
+                        row = {
+                            "Timestamp": timestamp,
+                            "Voltage": voltage,
+                            "Thickness (cm)": thickness_cm,
+                            "Risk": 'High' if risk == 1 else 'Low',
+                            "Lifespan (years)": lifespan_prediction
+                        }
+                        data_list.append(row)
+                        df = pd.DataFrame(data_list)
+                        df = df.tail(10)  # Limit to latest 10 rows
+                        placeholder.dataframe(df, use_container_width=True)
+
+                        st.progress(min(voltage / 3.3, 1.0))
+
+                    except Exception as e:
+                        st.error(f"Error during prediction: {e}")
+
+            time.sleep(0.1)  # Small delay between reads to avoid flooding the UI
 else:
-    st.error("❌ Unable to load one or more model files. Please check your file paths and try again.")
-
-import os
-st.write("Current working directory:", os.getcwd())
-st.write("Classifier path exists:", os.path.exists(clf_path))
-# Trigger redeploy
-st.write("App reloaded")
-import os
-st.write("Current working directory:", os.getcwd())
-st.write("Files in directory:", os.listdir('.'))
-st.write("Classifier model exists:", os.path.exists(clf_path))
-st.write("Scaler exists:", os.path.exists(scaler_path))
-st.write("Regression model exists:", os.path.exists(reg_path))
-
-
+    st.error("❌ Unable to load one or more model files or connect to the ESP32. Please check your setup.")
