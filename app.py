@@ -71,7 +71,7 @@ if clf_model and scaler:
         st.subheader("🔮 Prediction Results")
         st.write(f"📈 **Voltage**: `{voltage:.2f} V`")
         st.write(f"📏 **Glass Thickness**: `{thickness_cm:.2f} cm`")
-        st.write(f"⚠️ **Microfracture Risk**: {'High' if risk == 1 else 'Low'}`")
+        st.write(f"⚠️ **Microfracture Risk**: {'LOW' if risk == 1 else 'HIGH'}`")
         st.write(f"📅 **Estimated Remaining Lifespan**: `{lifespan_prediction:.2f} years`")
 
         st.progress(min(voltage / 3.3, 1.0))
