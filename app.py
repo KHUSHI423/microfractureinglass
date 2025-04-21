@@ -79,3 +79,8 @@ if clf_model and scaler:
         st.error(f"Error during prediction: {e}")
 else:
     st.error("❌ Unable to load one or more model files. Please check your file paths and try again.")
+
+import os
+st.write("Current working directory:", os.getcwd())
+st.write("Classifier path exists:", os.path.exists(clf_path))
+
