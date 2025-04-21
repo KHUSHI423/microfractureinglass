@@ -85,5 +85,11 @@ st.write("Current working directory:", os.getcwd())
 st.write("Classifier path exists:", os.path.exists(clf_path))
 # Trigger redeploy
 st.write("App reloaded")
+import os
+st.write("Current working directory:", os.getcwd())
+st.write("Files in directory:", os.listdir('.'))
+st.write("Classifier model exists:", os.path.exists(clf_path))
+st.write("Scaler exists:", os.path.exists(scaler_path))
+st.write("Regression model exists:", os.path.exists(reg_path))
 
 
