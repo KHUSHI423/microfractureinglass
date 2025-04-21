@@ -42,8 +42,10 @@ def estimate_lifespan(thickness_mm, voltage):
     return max(adjusted_lifespan, 0)
 
 # File paths
-clf_path = r'C:\Users\khush\Downloads\microfracture\fracture_detection_model.pkl'
-scaler_path = r'C:\Users\khush\Downloads\microfracture\scaler.pkl'
+clf_path = 'fracture_detection_model.pkl'
+scaler_path = 'scaler.pkl'
+reg_path = 'lifespan_model.pkl'
+
 
 
 # Load models
